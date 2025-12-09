@@ -102,7 +102,7 @@ void handle_interrupt(unsigned cause) {
         // This ensures the interrupt line drops low, ready for the next rising edge.
 
         if (!get_btn()) {
-            *btn_edge = 0xFF;
+            
         }
 
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
@@ -141,6 +141,8 @@ void handle_interrupt(unsigned cause) {
     set_displays(3, minutes / 10);
     set_displays(4, hours % 10);
     set_displays(5, hours / 10);
+
+    *btn_edge = 0xFF;
 }
 
 /* Initialize Interrupts and Timer */
