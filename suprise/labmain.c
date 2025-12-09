@@ -63,7 +63,7 @@ void set_displays(int display_number, int value) {
  */
 void handle_interrupt(unsigned cause) {
     print_dec(cause);
-    
+
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
@@ -74,22 +74,24 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
     // ==========================================
-    if ((*timer_status & 1) == 1) {
-        // Acknowledge Timer Interrupt
-        *timer_status = 0; 
-        timeoutcount++;
+    if (cause == 16) {
+        if ((*timer_status & 1) == 1) {
+            // Acknowledge Timer Interrupt
+            *timer_status = 0; 
+            timeoutcount++;
 
-        if (timeoutcount >= 10) {
-            timeoutcount = 0;
-            // Standard 1-second increment
-            seconds++;
-            if (seconds >= 60) {
-                seconds = 0;
-                minutes++;
-                if (minutes >= 60) {
-                    minutes = 0;
-                    hours++;
-                    if (hours >= 24) hours = 0;
+            if (timeoutcount >= 10) {
+                timeoutcount = 0;
+                // Standard 1-second increment
+                seconds++;
+                if (seconds >= 60) {
+                    seconds = 0;
+                    minutes++;
+                    if (minutes >= 60) {
+                        minutes = 0;
+                        hours++;
+                        if (hours >= 24) hours = 0;
+                    }
                 }
             }
         }
@@ -99,23 +101,25 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
-    if ((*btn_edge >> 1) & 1) {
-        // A. Increment by 2 seconds
-        seconds += 2;
+    if (cause == 18) {
+        if (1) {
+            // A. Increment by 2 seconds
+            seconds += 2;
 
-        // B. Handle Overflow
-        if (seconds >= 60) {
-            seconds -= 60; 
-            minutes++;
-            if (minutes >= 60) {
-                minutes = 0;
-                hours++;
-                if (hours >= 24) hours = 0;
+            // B. Handle Overflow
+            if (seconds >= 60) {
+                seconds -= 60; 
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                    if (hours >= 24) hours = 0;
+                }
             }
+            // C. Clear the Edge Capture (Interrupt Acknowledge)
+            // Write 1 to Bit 1 to clear it
+            *btn_edge = 2; 
         }
-        // C. Clear the Edge Capture (Interrupt Acknowledge)
-        // Write 1 to Bit 1 to clear it
-        *btn_edge = 2; 
     }
 
     // ==========================================
