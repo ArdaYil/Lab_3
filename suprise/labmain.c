@@ -100,9 +100,9 @@ void handle_interrupt(unsigned cause) {
     // We check *btn_edge directly to be safe.
     int edge_val = *btn_edge;
     
-    if (edge_val != 0) {
+    if (cause == 18) {
         // A. Check if our specific button (Bit 1) was the trigger
-        if ((edge_val >> 1) & 1) {
+        if (1) {
             // Increment by 2 seconds
             seconds += 2;
 
