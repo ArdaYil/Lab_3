@@ -103,8 +103,13 @@ void handle_interrupt(unsigned cause) {
 
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
         if (get_btn()) {
-            *btn_edge = 0;
-            // A. Increment by 2 seconds
+                // 1. Capture the edge state
+            int pending_edges = *btn_edge;
+
+            // 2. Clear ONLY the pending bits by writing 1s to them.
+            // Writing 0 does NOTHING on this hardware core.
+            // We write back 'pending_edges' because it has 1s in the positions that triggered.
+            *btn_edge = pending_edges; 
             seconds += 2;
 
             // B. Handle Overflow
