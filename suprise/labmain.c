@@ -53,6 +53,7 @@ void set_displays(int display_number, int value) {
 
 // INTERRUPT HANDLER
 void handle_interrupt(unsigned int cause) {
+    print_dec(cause);
     volatile int* timer_status = (volatile int*)(0x04000020);
     int current_btn;
     int sw_val;
@@ -136,9 +137,9 @@ int main() {
     labinit();
 
     while (1) {
-        print("Prime: ");
+        //print("Prime: ");
         prime = nextprime(prime);
-        print_dec(prime);
-        print("\n");
+        //print_dec(prime);
+        //print("\n");
     }
 }
