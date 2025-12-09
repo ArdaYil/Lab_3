@@ -63,6 +63,7 @@ void set_displays(int display_number, int value) {
  */
 void handle_interrupt(unsigned cause) {
     print_dec(cause);
+    
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
@@ -98,7 +99,7 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
-    if (*btn_edge & 1) {
+    if ((*btn_edge >> 1) & 1) {
         // A. Increment by 2 seconds
         seconds += 2;
 
