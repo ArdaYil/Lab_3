@@ -773,7 +773,7 @@ Disassembly of section .text:
  b24:	02d00693          	li	a3,45
  b28:	02d72623          	sw	a3,44(a4) # 400002c <_stack_end+0x3eff278>
  b2c:	040007b7          	lui	a5,0x4000
- b30:	00700713          	li	a4,7
+ b30:	00300713          	li	a4,3
  b34:	02e7a223          	sw	a4,36(a5) # 4000024 <_stack_end+0x3eff270>
  b38:	040006b7          	lui	a3,0x4000
  b3c:	0206a023          	sw	zero,32(a3) # 4000020 <_stack_end+0x3eff26c>
@@ -802,7 +802,7 @@ Disassembly of section .text:
  b90:	02d00693          	li	a3,45
  b94:	02d72623          	sw	a3,44(a4) # 400002c <_stack_end+0x3eff278>
  b98:	040007b7          	lui	a5,0x4000
- b9c:	00700713          	li	a4,7
+ b9c:	00300713          	li	a4,3
  ba0:	02e7a223          	sw	a4,36(a5) # 4000024 <_stack_end+0x3eff270>
  ba4:	040006b7          	lui	a3,0x4000
  ba8:	0206a023          	sw	zero,32(a3) # 4000020 <_stack_end+0x3eff26c>

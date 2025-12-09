@@ -160,7 +160,7 @@ void labinit(void) {
     // 1. Setup Timer Hardware (100ms)
     *timer_periodl = 0xC6C0; 
     *timer_periodh = 0x002D; 
-    *timer_control = 0x7;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
+    *timer_control = 0x3;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
     *timer_status = 0;
 
     // 2. Setup Button Hardware
