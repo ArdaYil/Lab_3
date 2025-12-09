@@ -61,6 +61,7 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
+    print_dec(cause);
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
