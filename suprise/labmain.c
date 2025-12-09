@@ -16,7 +16,7 @@ extern void delay(int);
 extern int nextprime(int);
 
 #define CAUSE_TIMER 16
-#define CAUSE_BUTTON 17
+#define CAUSE_BUTTON 18
 
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
@@ -146,7 +146,7 @@ void labinit(void) {
     // Clear pending status
     *timer_status = 0;
 
-    asm volatile("csrs mie, %0" :: "r"(0x30000));
+    asm volatile("csrs mie, %0" :: "r"(0x50000));
 }
 
 int main() {

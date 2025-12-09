@@ -558,7 +558,7 @@ Disassembly of section .text:
  7d0:	a19ff0ef          	jal	1e8 <print_dec>
  7d4:	01000793          	li	a5,16
  7d8:	22f40863          	beq	s0,a5,a08 <__heap_size+0x208>
- 7dc:	01100793          	li	a5,17
+ 7dc:	01200793          	li	a5,18
  7e0:	16f40863          	beq	s0,a5,950 <__heap_size+0x150>
  7e4:	00001437          	lui	s0,0x1
  7e8:	000014b7          	lui	s1,0x1
@@ -771,7 +771,7 @@ Disassembly of section .text:
  b1c:	040007b7          	lui	a5,0x4000
  b20:	02d72223          	sw	a3,36(a4) # 4000024 <_stack_end+0x3eff2d0>
  b24:	0207a023          	sw	zero,32(a5) # 4000020 <_stack_end+0x3eff2cc>
- b28:	000307b7          	lui	a5,0x30
+ b28:	000507b7          	lui	a5,0x50
  b2c:	3047a073          	csrs	mie,a5
  b30:	00008067          	ret
 
@@ -791,7 +791,7 @@ Disassembly of section .text:
  b64:	040007b7          	lui	a5,0x4000
  b68:	02d72223          	sw	a3,36(a4) # 4000024 <_stack_end+0x3eff2d0>
  b6c:	0207a023          	sw	zero,32(a5) # 4000020 <_stack_end+0x3eff2cc>
- b70:	000307b7          	lui	a5,0x30
+ b70:	000507b7          	lui	a5,0x50
  b74:	3047a073          	csrs	mie,a5
  b78:	00001437          	lui	s0,0x1
  b7c:	c6c42503          	lw	a0,-916(s0) # c6c <prime>
