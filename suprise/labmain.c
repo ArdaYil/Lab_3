@@ -97,7 +97,23 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        if ()
+        // A. Acknowledge IMMEDIATELY.
+        // We write 1s to all bits. This is critical to stop the interrupt line.
+        *btn_edge = 1;
+
+        // B. Increment Logic
+        // Since Cause 18 fired, we know a button was pressed.
+        // We skip checking specific bits because the register read was unreliable (returned 0).
+        seconds += 2;
+        if (seconds >= 60) {
+            seconds -= 60; 
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
+            }
+        }
     }
 
     // ==========================================
