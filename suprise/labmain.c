@@ -103,7 +103,7 @@ void handle_interrupt(unsigned cause) {
 
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
         if (get_btn()) {
-            *btn_edge = 0xFF;
+            *btn_edge = 2;
             // A. Increment by 2 seconds
             seconds += 2;
 

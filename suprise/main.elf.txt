@@ -722,7 +722,7 @@ Disassembly of section .text:
  a60:	02f6cc63          	blt	a3,a5,a98 <__heap_size+0x298>
  a64:	d0f72623          	sw	a5,-756(a4)
  a68:	d9dff06f          	j	804 <__heap_size+0x4>
- a6c:	0ff00713          	li	a4,255
+ a6c:	00200713          	li	a4,2
  a70:	00e7a023          	sw	a4,0(a5)
  a74:	00001437          	lui	s0,0x1
  a78:	d0042783          	lw	a5,-768(s0) # d00 <seconds>
