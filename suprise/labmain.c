@@ -63,16 +63,12 @@ void set_displays(int display_number, int value) {
 void handle_interrupt(unsigned cause) {
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
-    volatile int *btn_data     = (volatile int *)(0x040000d0); // Live data
-
-    // Debugging print
-    if (cause == 18) {
-        print("Cause: "); print_dec(cause);
-        // print(" Edge: "); print_dec(*btn_edge);
-        // print(" Live: "); print_dec(*btn_data);
-        // print("\n");
-    }
     
+    // Debug Print (Uncomment if needed)
+    if (cause != 16) { 
+        print("Cause: "); print_dec(cause); print("\n"); 
+    }
+
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
     // ==========================================
@@ -101,38 +97,32 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // A. Always clear the interrupt immediately to stop the flooding.
-        // We write 1s to all bits to clear any pending edge.
+        // A. Acknowledge IMMEDIATELY.
+        // We write 1s to all bits. This is critical to stop the interrupt line.
         *btn_edge = 0xFF;
 
-        // B. Check the LIVE status (Data Register) for Button 2 (Bit 1).
-        // Since Edge Capture seems unreliable/zero in your debug output,
-        // we trust the fact that you are holding the button down.
-        int live_val = *btn_data;
-        
-        if ((live_val >> 1) & 1) {
-            // C. Increment time
-            seconds += 2;
-            if (seconds >= 60) {
-                seconds -= 60; 
-                minutes++;
-                if (minutes >= 60) {
-                    minutes = 0;
-                    hours++;
-                    if (hours >= 24) hours = 0;
-                }
+        // B. Increment Logic
+        // Since Cause 18 fired, we know a button was pressed.
+        // We skip checking specific bits because the register read was unreliable (returned 0).
+        seconds += 2;
+        if (seconds >= 60) {
+            seconds -= 60; 
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
             }
-
-            // D. Debounce / Wait for Release
-            // Since we are using live status, if we don't wait, this will
-            // fire continuously while the button is held.
-            // We wait a bit to ensure we don't double-count a single press.
-            volatile int i;
-            for(i = 0; i < 300000; i++); 
-            
-            // Clear again after wait to eat any bounces
-            *btn_edge = 0xFF;
         }
+
+        // C. DEBOUNCE (Wait roughly 50ms)
+        // This prevents the "spam" where the bouncy mechanical switch
+        // triggers the ISR 50 times in a row.
+        volatile int i;
+        for(i = 0; i < 1500000; i++); 
+
+        // D. Clear again after wait to consume any bounces
+        *btn_edge = 0xFF;
     }
 
     // ==========================================
@@ -165,26 +155,20 @@ void labinit(void) {
     // 1. Setup Timer Hardware (100ms)
     *timer_periodl = 0xC6C0; 
     *timer_periodh = 0x002D; 
-    *timer_control = 0x7;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
+    *timer_control = 0x7;    // Start (1) + Cont (2) + ITO (4) = 7.
     *timer_status = 0;
 
     // 2. Setup Button Hardware
-    *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
+    // Enable interrupts for ALL 4 buttons (0xF = 1111)
+    // This ensures we catch the click even if you press Button 0 or Button 1.
+    *btn_mask = 0xF;   
     
     // Clear any previous edges to prevent immediate interrupt on start
     *btn_edge = 0xFF; 
 
     // 3. Enable RISC-V CPU Interrupts
-    // Enable multiple bits to ensure we catch the interrupt regardless of mapping:
-    // Bit 11 (0x800): Machine External Interrupt (Standard RISC-V)
-    // Bit 16 (0x10000): Local Int 0 (Timer)
-    // Bit 17 (0x20000): Local Int 1 
-    // Bit 18 (0x40000): Local Int 2 (Button)
-    // Value: 0x70800
-    asm volatile("csrs mie, %0" :: "r"(0x70800));
-
-    // Enable Global Interrupts (Bit 3 in mstatus)
-    asm volatile("csrs mstatus, %0" :: "r"(0x8));
+    asm volatile("csrs mie, %0" :: "r"(0x70800)); // Bit 11, 16, 17, 18
+    asm volatile("csrs mstatus, %0" :: "r"(0x8)); // Global Enable
 }
 
 int main() {
