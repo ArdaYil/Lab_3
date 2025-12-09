@@ -96,7 +96,7 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
-    // Check if Button 2 (Bit 1) triggered it
+    // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
     if ((*btn_edge >> 1) & 1) {
         // A. Increment by 2 seconds
         seconds += 2;
@@ -146,7 +146,7 @@ void labinit(void) {
     // 1. Setup Timer Hardware (100ms)
     *timer_periodl = 0xC6C0; 
     *timer_periodh = 0x002D; 
-    *timer_control = 0x7;    // Start + Cont + ITO
+    *timer_control = 0x7;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
     *timer_status = 0;
 
     // 2. Setup Button Hardware
@@ -156,10 +156,11 @@ void labinit(void) {
     // 3. Enable RISC-V CPU Interrupts
     // We enable multiple bits to ensure we catch the interrupt regardless of mapping:
     // Bit 11 (0x800): Machine External Interrupt (Standard RISC-V)
-    // Bit 16 (0x10000): Local Int 0 (Platform Specific)
-    // Bit 17 (0x20000): Local Int 1 (Platform Specific)
-    // Value: 0x20000 + 0x10000 + 0x800 = 0x30800
-    asm volatile("csrs mie, %0" :: "r"(0x30800));
+    // Bit 16 (0x10000): Local Int 0 (Timer)
+    // Bit 17 (0x20000): Local Int 1 (Often Buttons, but maybe not on your board)
+    // Bit 18 (0x40000): Local Int 2 (You suspected the button is here)
+    // Value: 0x40000 + 0x20000 + 0x10000 + 0x800 = 0x70800
+    asm volatile("csrs mie, %0" :: "r"(0x70800));
 
     // Enable Global Interrupts (Bit 3 in mstatus)
     asm volatile("csrs mstatus, %0" :: "r"(0x8));

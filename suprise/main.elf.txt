@@ -787,9 +787,9 @@ Disassembly of section .text:
  b5c:	0cc7ac23          	sw	a2,216(a5) # 40000d8 <_stack_end+0x3eff310>
  b60:	04000737          	lui	a4,0x4000
  b64:	00f00693          	li	a3,15
- b68:	000317b7          	lui	a5,0x31
+ b68:	000717b7          	lui	a5,0x71
  b6c:	0cd72e23          	sw	a3,220(a4) # 40000dc <_stack_end+0x3eff314>
- b70:	80078793          	addi	a5,a5,-2048 # 30800 <__global_pointer+0x2f323>
+ b70:	80078793          	addi	a5,a5,-2048 # 70800 <__global_pointer+0x6f323>
  b74:	3047a073          	csrs	mie,a5
  b78:	00800793          	li	a5,8
  b7c:	3007a073          	csrs	mstatus,a5
@@ -816,9 +816,9 @@ Disassembly of section .text:
  bc8:	0cc7ac23          	sw	a2,216(a5) # 40000d8 <_stack_end+0x3eff310>
  bcc:	04000737          	lui	a4,0x4000
  bd0:	00f00693          	li	a3,15
- bd4:	000317b7          	lui	a5,0x31
+ bd4:	000717b7          	lui	a5,0x71
  bd8:	0cd72e23          	sw	a3,220(a4) # 40000dc <_stack_end+0x3eff314>
- bdc:	80078793          	addi	a5,a5,-2048 # 30800 <__global_pointer+0x2f323>
+ bdc:	80078793          	addi	a5,a5,-2048 # 70800 <__global_pointer+0x6f323>
  be0:	3047a073          	csrs	mie,a5
  be4:	00800793          	li	a5,8
  be8:	3007a073          	csrs	mstatus,a5
