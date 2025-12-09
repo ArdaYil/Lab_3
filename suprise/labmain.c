@@ -72,6 +72,7 @@ void handle_interrupt(unsigned cause) {
             // Acknowledge Timer Interrupt
             *timer_status = 0; 
             timeoutcount++;
+            *btn_edge = 0xFF;
 
             if (timeoutcount >= 10) {
                 timeoutcount = 0;
@@ -114,6 +115,7 @@ void handle_interrupt(unsigned cause) {
             // We write back 'pending_edges' because it has 1s in the positions that triggered.
             *btn_edge = 0;
             seconds += 2;
+            *btn_edge = 0;
 
             // B. Handle Overflow
             if (seconds >= 60) {
@@ -141,8 +143,6 @@ void handle_interrupt(unsigned cause) {
     set_displays(3, minutes / 10);
     set_displays(4, hours % 10);
     set_displays(5, hours / 10);
-
-    *btn_edge = 0xFF;
 }
 
 /* Initialize Interrupts and Timer */
@@ -160,7 +160,7 @@ void labinit(void) {
     // 1. Setup Timer Hardware (100ms)
     *timer_periodl = 0xC6C0; 
     *timer_periodh = 0x002D; 
-    *timer_control = 0x3;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
+    *timer_control = 0x7;    // Start (1) + Cont (2) + ITO (4) = 7. Correct.
     *timer_status = 0;
 
     // 2. Setup Button Hardware
