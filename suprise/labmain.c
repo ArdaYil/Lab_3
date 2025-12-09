@@ -60,9 +60,12 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
+    // Print the interrupt cause immediately upon entry
     print_dec(cause);
+    print("\n"); // Add newline for readability
+
     volatile int *timer_status = (volatile int *)(0x04000020);
-    volatile int *btn_edge = (volatile int *)(0x040000d0 + 0xC);
+    volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
@@ -75,7 +78,6 @@ void handle_interrupt(unsigned cause) {
 
             if (timeoutcount >= 10) {
                 timeoutcount = 0;
-                *btn_edge = 0xFF;
                 // Standard 1-second increment
                 seconds++;
                 if (seconds >= 60) {
@@ -95,29 +97,21 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // 1. Read the state to decide what logic to run
-        int edge_val = *btn_edge;
-        
-        // 2. ACKNOWLEDGE IMMEDIATELY with a heavy hammer.
-        // Writing 0xFF clears ALL pending edge bits (Bit 0, 1, 2...).
-        // This ensures the interrupt line drops low, ready for the next rising edge.
+        // A. Capture the edge status to see WHICH button was pressed
+        int pending = *btn_edge;
 
-        if (!get_btn()) {
-            
-        }
+        // B. Clear the interrupt IMMEDIATELY. 
+        // We must write 1s to clear the bits. Writing 0 does nothing.
+        // We clear whatever was pending to stop the infinite loop.
+        *btn_edge = pending;
 
-        // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
-        if (get_btn()) {
-                // 1. Capture the edge state
-
-            // 2. Clear ONLY the pending bits by writing 1s to them.
-            // Writing 0 does NOTHING on this hardware core.
-            // We write back 'pending_edges' because it has 1s in the positions that triggered.
-            *btn_edge = 0;
+        // C. Logic: Check if Button 2 (Bit 1) was the trigger
+        // We use the variable 'pending' we captured earlier.
+        if ((pending >> 1) & 1) {
+            // Increment by 2 seconds
             seconds += 2;
-            *btn_edge = 0;
 
-            // B. Handle Overflow
+            // Handle Overflow
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
@@ -167,6 +161,7 @@ void labinit(void) {
     *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
     
     // Clear any previous edges to prevent immediate interrupt on start
+    // Writing 1s clears the bits. 0xFF clears all.
     *btn_edge = 0xFF; 
 
     // 3. Enable RISC-V CPU Interrupts
