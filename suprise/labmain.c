@@ -15,6 +15,7 @@ extern void time2string(char*,int);
 extern void tick(int*);
 extern void delay(int);
 extern int nextprime( int );
+extern void enable_interrupt(void); // added
 
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";

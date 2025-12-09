@@ -4,7 +4,7 @@ welcome_msg: .asciz "================================================\n===== RIS
 	
 .section .text
 .align 2
-.globl _start
+.globl _start, enable_interrupt
 	
 _isr_handler:
 	j _isr_routine	    /* ISR service routine here */
@@ -145,7 +145,6 @@ _start:
 	
 loop:	j loop
 
-    .globl enable_interrupt
 enable_interrupt:
     // Enable timer interrupts (bit 16) and button interrupts (bit 18)
     li t0, (1 << 16) | (1 << 18)
