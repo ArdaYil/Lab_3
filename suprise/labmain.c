@@ -72,10 +72,10 @@ void handle_interrupt(unsigned cause) {
             // Acknowledge Timer Interrupt
             *timer_status = 0; 
             timeoutcount++;
-            *btn_edge = 0xFF;
 
             if (timeoutcount >= 10) {
                 timeoutcount = 0;
+                *btn_edge = 0xFF;
                 // Standard 1-second increment
                 seconds++;
                 if (seconds >= 60) {
