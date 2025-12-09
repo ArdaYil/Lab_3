@@ -65,29 +65,27 @@ void handle_interrupt(unsigned cause) {
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
-    // We check the devices regardless of the specific cause number, 
-    // because on some boards they map to 16/17 (Local) and on others to 11 (External).
-    
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
     // ==========================================
-    // Check if Timer caused interrupt (Bit 0 of Status)
-    if ((*timer_status & 1) == 1) {
-        // Acknowledge Timer Interrupt
-        *timer_status = 0; 
-        timeoutcount++;
+    if (cause == 16) {
+        if ((*timer_status & 1) == 1) {
+            // Acknowledge Timer Interrupt
+            *timer_status = 0; 
+            timeoutcount++;
 
-        if (timeoutcount >= 10) {
-            timeoutcount = 0;
-            // Standard 1-second increment
-            seconds++;
-            if (seconds >= 60) {
-                seconds = 0;
-                minutes++;
-                if (minutes >= 60) {
-                    minutes = 0;
-                    hours++;
-                    if (hours >= 24) hours = 0;
+            if (timeoutcount >= 10) {
+                timeoutcount = 0;
+                // Standard 1-second increment
+                seconds++;
+                if (seconds >= 60) {
+                    seconds = 0;
+                    minutes++;
+                    if (minutes >= 60) {
+                        minutes = 0;
+                        hours++;
+                        if (hours >= 24) hours = 0;
+                    }
                 }
             }
         }
@@ -96,17 +94,21 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
-    // Check if the cause was 18 (Local Int 2) OR if there are pending edges.
-    // We check *btn_edge directly to be safe.
-    int edge_val = *btn_edge;
-    
     if (cause == 18) {
-        // A. Check if our specific button (Bit 1) was the trigger
-        if (1) {
-            // Increment by 2 seconds
+        // Read the Edge Capture Register
+        int edge_val = *btn_edge;
+        
+        // 1. Acknowledge the interrupt immediately.
+        // We write the value back to clear the pending bits.
+        // If we don't do this for *all* set bits, the interrupt loops forever.
+        *btn_edge = edge_val;
+
+        // 2. Check if our specific button (Bit 1) was the trigger
+        if ((edge_val >> 1) & 1) {
+            // A. Increment by 2 seconds
             seconds += 2;
 
-            // Handle Overflow
+            // B. Handle Overflow
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
@@ -117,11 +119,6 @@ void handle_interrupt(unsigned cause) {
                 }
             }
         }
-
-        // B. CRITICAL: Clear ALL pending edges (Interrupt Acknowledge)
-        // We write 0xFF to ensure we clear Bit 0, Bit 1, Bit 2...
-        // This prevents the infinite loop if a different button caused the IRQ.
-        *btn_edge = 0xFF; 
     }
 
     // ==========================================
@@ -160,13 +157,12 @@ void labinit(void) {
     // 2. Setup Button Hardware
     *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
     
-    // Clear any previous edges. 
-    // This is safe now because handle_interrupt is robust enough to handle spurious edges.
+    // Clear any previous edges to prevent immediate interrupt on start
     *btn_edge = 0xFF; 
 
     // 3. Enable RISC-V CPU Interrupts
     // Enable multiple bits to ensure we catch the interrupt regardless of mapping:
-    // Bit 11 (0x800): Machine External Interrupt
+    // Bit 11 (0x800): Machine External Interrupt (Standard RISC-V)
     // Bit 16 (0x10000): Local Int 0 (Timer)
     // Bit 17 (0x20000): Local Int 1 
     // Bit 18 (0x40000): Local Int 2 (Button)
