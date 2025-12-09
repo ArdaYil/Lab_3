@@ -101,6 +101,10 @@ void handle_interrupt(unsigned cause) {
         // Writing 0xFF clears ALL pending edge bits (Bit 0, 1, 2...).
         // This ensures the interrupt line drops low, ready for the next rising edge.
 
+        if (!get_btn()) {
+            *btn_edge = 0xFF;
+        }
+
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
         if (get_btn()) {
                 // 1. Capture the edge state
@@ -109,7 +113,6 @@ void handle_interrupt(unsigned cause) {
             // Writing 0 does NOTHING on this hardware core.
             // We write back 'pending_edges' because it has 1s in the positions that triggered.
             *btn_edge = 0;
-            *btn_edge = 0xFF;
             seconds += 2;
 
             // B. Handle Overflow
