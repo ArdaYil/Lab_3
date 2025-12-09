@@ -39,10 +39,8 @@ int get_sw(void) {
 }
 
 // Helper function to read Button (Bit 1)
-// Note: This reads the LIVE state, not the interrupt latch.
 int get_btn(void) {
     volatile int *btn_ptr = (volatile int *)0x040000d0;
-    // Check Bit 1 (Button 2), not Bit 0
     return (*btn_ptr >> 1) & 1; 
 }
 
@@ -63,26 +61,25 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
-    // Print the cause every time the interrupt fires
+    volatile int *timer_status = (volatile int *)(0x04000020);
+    volatile int *btn_edge     = (volatile int *)(0x040000dc);
+    volatile int *btn_data     = (volatile int *)(0x040000d0); // Live data
+
+    // Print Cause
     print("Cause: ");
     print_dec(cause);
     print("\n");
-
-    volatile int *timer_status = (volatile int *)(0x04000020);
-    volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
     // ==========================================
     if (cause == 16) {
         if ((*timer_status & 1) == 1) {
-            // Acknowledge Timer Interrupt
             *timer_status = 0; 
             timeoutcount++;
 
             if (timeoutcount >= 10) {
                 timeoutcount = 0;
-                // Standard 1-second increment
                 seconds++;
                 if (seconds >= 60) {
                     seconds = 0;
@@ -101,20 +98,24 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // A. Capture which edges triggered the interrupt
-        int pending_edges = *btn_edge;
+        // Debug: Read registers
+        int edge_val = *btn_edge;
+        int live_val = *btn_data;
 
-        // B. Acknowledge IMMEDIATELY.
-        // We write back the value we read. This writes 1s to the pending bits,
-        // which clears them in the hardware (according to PIO spec).
-        *btn_edge = pending_edges;
+        // Print debug info
+        print("  EdgeReg: ");
+        print_dec(edge_val);
+        print("  LiveBtn: ");
+        print_dec(live_val);
+        print("\n");
 
-        // C. Logic: Check if Button 2 (Bit 1) was the trigger
-        if ((pending_edges >> 1) & 1) {
-            // A. Increment by 2 seconds
+        // Acknowledge interrupt immediately by clearing ALL edges
+        *btn_edge = 0xFF;
+
+        // Logic: Check if Button 2 (Bit 1) was the trigger
+        if ((edge_val >> 1) & 1) {
+            print("  -> Btn2 Triggered!\n");
             seconds += 2;
-
-            // B. Handle Overflow
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
