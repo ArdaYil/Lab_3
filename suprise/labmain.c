@@ -15,6 +15,9 @@ extern void tick(int*);
 extern void delay(int);
 extern int nextprime(int);
 
+#define CAUSE_TIMER 16
+#define CAUSE_BUTTON 17
+
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
 
@@ -52,43 +55,25 @@ void set_displays(int display_number, int value) {
 }
 
 // INTERRUPT HANDLER
-void handle_interrupt(unsigned int cause) {
+void handle_interrupt(unsigned cause) {
     print_dec(cause);
-    volatile int* timer_status = (volatile int*)(0x04000020);
-    int current_btn;
-    int sw_val;
-    int selector;
-    int value;
+    volatile int *timer_status = (volatile int *)(0x04000020);
+    volatile int *btn_edge     = (volatile int *)(0x040000dc);
+    int current_btn, sw_val, selector, value;
 
-    // Check if the interrupt was caused by the Timer (Bit 0 of Status is 1)
-    if ((*timer_status & 1) == 1) {
-        // Acknowledge the interrupt by clearing the status register
-        *timer_status = 0;
-
-        // Increment the global counter
+    // ==========================================
+    // 1. CHECK CAUSE
+    // ==========================================
+    
+    // --- TIMER INTERRUPT (Cause 16) ---
+    if (cause == CAUSE_TIMER) {
+        // Acknowledge Timer Interrupt
+        *timer_status = 0; 
         timeoutcount++;
 
-        // Only update displays and time once every 10 timeouts (1 Second)
         if (timeoutcount >= 10) {
             timeoutcount = 0;
-
-            // --- Button Logic ---
-            current_btn = get_btn();
-            if (current_btn != 0) {
-                sw_val = get_sw();
-                selector = (sw_val >> 8) & 0x03;
-                value = sw_val & 0x3F;
-
-                if (selector == 1) {  // Set Seconds
-                    seconds = (value < 60) ? value : 59;
-                } else if (selector == 2) {  // Set Minutes
-                    minutes = (value < 60) ? value : 59;
-                } else if (selector == 3) {  // Set Hours
-                    hours = (value < 24) ? value : 23;
-                }
-            }
-
-            // --- 7-Segment Clock Logic ---
+            // Standard 1-second increment
             seconds++;
             if (seconds >= 60) {
                 seconds = 0;
@@ -96,23 +81,52 @@ void handle_interrupt(unsigned int cause) {
                 if (minutes >= 60) {
                     minutes = 0;
                     hours++;
-                    if (hours >= 24) {
-                        hours = 0;
-                    }
+                    if (hours >= 24) hours = 0;
                 }
             }
-
-            // Update the display registers
-            set_displays(0, seconds % 10);
-            set_displays(1, seconds / 10);
-            set_displays(2, minutes % 10);
-            set_displays(3, minutes / 10);
-            set_displays(4, hours % 10);
-            set_displays(5, hours / 10);
         }
     }
 
+    // --- BUTTON INTERRUPT (Cause 17) ---
+    else if (cause == CAUSE_BUTTON) {
+        // Check if Button 2 (Bit 1) triggered it
+        if ((*btn_edge >> 1) & 1) {
+            // A. Increment by 2 seconds
+            seconds += 2;
+
+            // B. Handle Overflow
+            if (seconds >= 60) {
+                seconds -= 60; 
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                    if (hours >= 24) hours = 0;
+                }
+            }
+            // C. Clear the Edge Capture (Interrupt Acknowledge)
+            *btn_edge = 2; // Write 1 to Bit 1
+        }
+    }
+
+    // ==========================================
+    // 2. UPDATE DISPLAYS (Run on every interrupt)
+    // ==========================================
+    
+    // Check switches to allow setting time if button is held (Visual Logic)
+    // We put this here so display updates immediately reflect changes
+    // even if the change came from the button interrupt.
+    
     tick(&mytime);
+    time2string(textbuffer, mytime);
+    display_string(textbuffer);
+
+    set_displays(0, seconds % 10);
+    set_displays(1, seconds / 10);
+    set_displays(2, minutes % 10);
+    set_displays(3, minutes / 10);
+    set_displays(4, hours % 10);
+    set_displays(5, hours / 10);
 }
 
 /* Initialize Interrupts and Timer */
@@ -131,6 +145,8 @@ void labinit(void) {
 
     // Clear pending status
     *timer_status = 0;
+
+    asm volatile("csrs mie, %0" :: "r"(0x30000));
 }
 
 int main() {
