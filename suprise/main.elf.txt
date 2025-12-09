@@ -570,7 +570,7 @@ Disassembly of section .text:
  800:	00072703          	lw	a4,0(a4)
  804:	00001437          	lui	s0,0x1
  808:	00277793          	andi	a5,a4,2
- 80c:	00079c63          	bnez	a5,824 <__heap_size+0x24>
+ 80c:	00078c63          	beqz	a5,824 <__heap_size+0x24>
  810:	d0042783          	lw	a5,-768(s0) # d00 <seconds>
  814:	03b00713          	li	a4,59
  818:	00278693          	addi	a3,a5,2
