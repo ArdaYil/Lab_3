@@ -39,8 +39,11 @@ int get_sw(void) {
 }
 
 // Helper function to read Button (Bit 1)
+// Note: This reads the LIVE state, not the interrupt latch.
 int get_btn(void) {
-    return *(volatile int*)0x040000d0 & 1;
+    volatile int *btn_ptr = (volatile int *)0x040000d0;
+    // Check Bit 1 (Button 2), not Bit 0
+    return (*btn_ptr >> 1) & 1; 
 }
 
 void set_displays(int display_number, int value) {
@@ -60,9 +63,10 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
-    // Print the interrupt cause immediately upon entry
+    // Print the cause every time the interrupt fires
+    print("Cause: ");
     print_dec(cause);
-    print("\n"); // Add newline for readability
+    print("\n");
 
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
@@ -97,21 +101,20 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // A. Capture the edge status to see WHICH button was pressed
-        int pending = *btn_edge;
+        // A. Capture which edges triggered the interrupt
+        int pending_edges = *btn_edge;
 
-        // B. Clear the interrupt IMMEDIATELY. 
-        // We must write 1s to clear the bits. Writing 0 does nothing.
-        // We clear whatever was pending to stop the infinite loop.
-        *btn_edge = pending;
+        // B. Acknowledge IMMEDIATELY.
+        // We write back the value we read. This writes 1s to the pending bits,
+        // which clears them in the hardware (according to PIO spec).
+        *btn_edge = pending_edges;
 
         // C. Logic: Check if Button 2 (Bit 1) was the trigger
-        // We use the variable 'pending' we captured earlier.
-        if ((pending >> 1) & 1) {
-            // Increment by 2 seconds
+        if ((pending_edges >> 1) & 1) {
+            // A. Increment by 2 seconds
             seconds += 2;
 
-            // Handle Overflow
+            // B. Handle Overflow
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
@@ -161,7 +164,6 @@ void labinit(void) {
     *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
     
     // Clear any previous edges to prevent immediate interrupt on start
-    // Writing 1s clears the bits. 0xFF clears all.
     *btn_edge = 0xFF; 
 
     // 3. Enable RISC-V CPU Interrupts
