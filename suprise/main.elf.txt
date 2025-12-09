@@ -562,10 +562,10 @@ Disassembly of section .text:
  7e0:	01200793          	li	a5,18
  7e4:	04f41c63          	bne	s0,a5,83c <__heap_size+0x3c>
  7e8:	04000737          	lui	a4,0x4000
- 7ec:	0dc72783          	lw	a5,220(a4) # 40000dc <_stack_end+0x3eff2dc>
+ 7ec:	0d072783          	lw	a5,208(a4) # 40000d0 <_stack_end+0x3eff2d0>
  7f0:	00001437          	lui	s0,0x1
- 7f4:	0017f793          	andi	a5,a5,1
- 7f8:	2a078263          	beqz	a5,a9c <__heap_size+0x29c>
+ 7f4:	0027f793          	andi	a5,a5,2
+ 7f8:	2a079263          	bnez	a5,a9c <__heap_size+0x29c>
  7fc:	d4042783          	lw	a5,-704(s0) # d40 <seconds>
  800:	03b00713          	li	a4,59
  804:	00278693          	addi	a3,a5,2
