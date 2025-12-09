@@ -67,7 +67,7 @@ void handle_interrupt(unsigned cause) {
 
     // Debugging print
     if (cause == 18) {
-        // print("Cause: "); print_dec(cause);
+        print("Cause: "); print_dec(cause);
         // print(" Edge: "); print_dec(*btn_edge);
         // print(" Live: "); print_dec(*btn_data);
         // print("\n");
