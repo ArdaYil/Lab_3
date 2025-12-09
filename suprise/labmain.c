@@ -96,7 +96,7 @@ void handle_interrupt(unsigned cause) {
     if (cause == 18) {
         // 1. Read the state to decide what logic to run
         int edge_val = *btn_edge;
-        *btn_edge = 2;
+        *btn_edge = 0;
         
         // 2. ACKNOWLEDGE IMMEDIATELY with a heavy hammer.
         // Writing 0xFF clears ALL pending edge bits (Bit 0, 1, 2...).
