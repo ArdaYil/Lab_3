@@ -100,10 +100,10 @@ void handle_interrupt(unsigned cause) {
         // 2. ACKNOWLEDGE IMMEDIATELY with a heavy hammer.
         // Writing 0xFF clears ALL pending edge bits (Bit 0, 1, 2...).
         // This ensures the interrupt line drops low, ready for the next rising edge.
-        *btn_edge = 0xFF;
 
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
         if (get_btn()) {
+            *btn_edge = 0xFF;
             // A. Increment by 2 seconds
             seconds += 2;
 
