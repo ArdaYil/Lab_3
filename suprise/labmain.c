@@ -29,9 +29,9 @@ int minutes = 0;
 int seconds = 0;
 char textbuffer[30];   // Buffer for time2string
 
-// Interrupt Cause Constants (Specific to DTEK-V)
-#define CAUSE_TIMER 16
-#define CAUSE_BUTTON 17
+// Interrupt Cause Constants
+// Cause 11 is the Standard RISC-V Machine External Interrupt
+#define CAUSE_MACHINE_EXTERNAL 11
 
 // Helper function to read Switches
 int get_sw(void) {
@@ -64,14 +64,15 @@ void set_displays(int display_number, int value) {
 void handle_interrupt(unsigned cause) {
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
-    int current_btn, sw_val, selector, value;
-
-    // ==========================================
-    // 1. CHECK CAUSE
-    // ==========================================
     
-    // --- TIMER INTERRUPT (Cause 16) ---
-    if (cause == CAUSE_TIMER) {
+    // We check the devices regardless of the specific cause number, 
+    // because on some boards they map to 16/17 (Local) and on others to 11 (External).
+    // This makes the handler robust for both configurations.
+    
+    // ==========================================
+    // 1. CHECK TIMER (Address 0x04000020)
+    // ==========================================
+    if ((*timer_status & 1) == 1) {
         // Acknowledge Timer Interrupt
         *timer_status = 0; 
         timeoutcount++;
@@ -92,36 +93,32 @@ void handle_interrupt(unsigned cause) {
         }
     }
 
-    // --- BUTTON INTERRUPT (Cause 17) ---
-    else if (cause == CAUSE_BUTTON) {
-        // Check if Button 2 (Bit 1) triggered it
-        if ((*btn_edge >> 1) & 1) {
-            // A. Increment by 2 seconds
-            seconds += 2;
+    // ==========================================
+    // 2. CHECK BUTTON (Address 0x040000dc)
+    // ==========================================
+    // Check if Button 2 (Bit 1) triggered it
+    if ((*btn_edge >> 1) & 1) {
+        // A. Increment by 2 seconds
+        seconds += 2;
 
-            // B. Handle Overflow
-            if (seconds >= 60) {
-                seconds -= 60; 
-                minutes++;
-                if (minutes >= 60) {
-                    minutes = 0;
-                    hours++;
-                    if (hours >= 24) hours = 0;
-                }
+        // B. Handle Overflow
+        if (seconds >= 60) {
+            seconds -= 60; 
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
             }
-            // C. Clear the Edge Capture (Interrupt Acknowledge)
-            *btn_edge = 2; // Write 1 to Bit 1
         }
+        // C. Clear the Edge Capture (Interrupt Acknowledge)
+        // Write 1 to Bit 1 to clear it
+        *btn_edge = 2; 
     }
 
     // ==========================================
-    // 2. UPDATE DISPLAYS (Run on every interrupt)
+    // 3. UPDATE DISPLAYS
     // ==========================================
-    
-    // Check switches to allow setting time if button is held (Visual Logic)
-    // We put this here so display updates immediately reflect changes
-    // even if the change came from the button interrupt.
-    
     tick(&mytime);
     time2string(textbuffer, mytime);
     display_string(textbuffer);
@@ -157,10 +154,15 @@ void labinit(void) {
     *btn_edge = 0xF; // Clear any previous edges
 
     // 3. Enable RISC-V CPU Interrupts
-    // The Assembly startup enables Bit 11 (External) and Bit 3 (Global).
-    // We MUST enable the specific Local Interrupts for Timer (16) and Button (17).
-    // Bit 16 (0x10000) + Bit 17 (0x20000) = 0x30000.
-    asm volatile("csrs mie, %0" :: "r"(0x30000));
+    // We enable multiple bits to ensure we catch the interrupt regardless of mapping:
+    // Bit 11 (0x800): Machine External Interrupt (Standard RISC-V)
+    // Bit 16 (0x10000): Local Int 0 (Platform Specific)
+    // Bit 17 (0x20000): Local Int 1 (Platform Specific)
+    // Value: 0x20000 + 0x10000 + 0x800 = 0x30800
+    asm volatile("csrs mie, %0" :: "r"(0x30800));
+
+    // Enable Global Interrupts (Bit 3 in mstatus)
+    asm volatile("csrs mstatus, %0" :: "r"(0x8));
 }
 
 int main() {
