@@ -97,7 +97,7 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
-    if ((*btn_edge >> 1) & 1) {
+    if (*btn_edge & 1) {
         // A. Increment by 2 seconds
         seconds += 2;
 
