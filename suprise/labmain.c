@@ -61,7 +61,6 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
-    print_dec(cause);
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
@@ -95,15 +94,15 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // Read the Edge Capture Register
+        // 1. Read the state to decide what logic to run
         int edge_val = *btn_edge;
         
-        // 1. Acknowledge the interrupt immediately.
-        // We write the value back to clear the pending bits.
-        // If we don't do this for *all* set bits, the interrupt loops forever.
-        *btn_edge = edge_val;
+        // 2. ACKNOWLEDGE IMMEDIATELY with a heavy hammer.
+        // Writing 0xFF clears ALL pending edge bits (Bit 0, 1, 2...).
+        // This ensures the interrupt line drops low, ready for the next rising edge.
+        *btn_edge = 0xFF;
 
-        // 2. Check if our specific button (Bit 1) was the trigger
+        // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
         if ((edge_val >> 1) & 1) {
             // A. Increment by 2 seconds
             seconds += 2;
