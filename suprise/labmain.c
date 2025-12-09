@@ -114,15 +114,6 @@ void handle_interrupt(unsigned cause) {
                 if (hours >= 24) hours = 0;
             }
         }
-
-        // C. DEBOUNCE (Wait roughly 50ms)
-        // This prevents the "spam" where the bouncy mechanical switch
-        // triggers the ISR 50 times in a row.
-        volatile int i;
-        for(i = 0; i < 1500000; i++); 
-
-        // D. Clear again after wait to consume any bounces
-        *btn_edge = 0xFF;
     }
 
     // ==========================================
