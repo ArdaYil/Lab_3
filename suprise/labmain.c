@@ -40,8 +40,7 @@ int get_sw(void) {
 
 // Helper function to read Button (Bit 1)
 int get_btn(void) {
-    volatile int *btn_ptr = (volatile int *)0x040000d0;
-    return !((*btn_ptr >> 1) & 1);
+    return *(volatile int*)0x040000d0 & 1;
 }
 
 void set_displays(int display_number, int value) {
@@ -104,7 +103,7 @@ void handle_interrupt(unsigned cause) {
         *btn_edge = 0xFF;
 
         // 3. Logic: Check if Button 2 (Bit 1) was the one pressed
-        if (!get_btn()) {
+        if (get_btn()) {
             // A. Increment by 2 seconds
             seconds += 2;
 
