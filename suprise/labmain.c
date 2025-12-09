@@ -102,7 +102,7 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
     if (cause == 18) {
-        if (get_btn()) {
+        if ((*btn_edge >> 1) & 1) {
             // A. Increment by 2 seconds
             seconds += 2;
 
@@ -157,7 +157,7 @@ void labinit(void) {
 
     // 2. Setup Button Hardware
     *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
-    *btn_edge = 0xF; // Clear any previous edges
+    //*btn_edge = 0xF; // Clear any previous edges
 
     // 3. Enable RISC-V CPU Interrupts
     // We enable multiple bits to ensure we catch the interrupt regardless of mapping:
