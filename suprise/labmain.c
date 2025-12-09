@@ -162,6 +162,10 @@ void labinit(void) {
     asm volatile("csrs mstatus, %0" :: "r"(0x8)); // Global Enable
 }
 
+enable_interrupt() {; // added
+
+}
+
 int main() {
     labinit();
 
