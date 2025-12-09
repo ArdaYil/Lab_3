@@ -6,17 +6,15 @@
 
    For copyright and licensing, see file COPYING */
 
+
 /* Below functions are external and found in other files. */
 extern void print(const char*);
 extern void print_dec(unsigned int);
 extern void display_string(char*);
-extern void time2string(char*, int);
+extern void time2string(char*,int);
 extern void tick(int*);
 extern void delay(int);
-extern int nextprime(int);
-
-#define CAUSE_TIMER 16
-#define CAUSE_BUTTON 18
+extern int nextprime( int );
 
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
@@ -29,24 +27,30 @@ int prime = 1234567;
 int hours = 0;
 int minutes = 0;
 int seconds = 0;
-char textbuffer[30];  // Buffer for time2string
+char textbuffer[30];   // Buffer for time2string
 
-// Helper function to read the Second Button (Bit 1)
-int get_btn(void) {
-    return *(volatile int*)0x040000d0 & 1;
-}
+// Interrupt Cause Constants (Specific to DTEK-V)
+#define CAUSE_TIMER 16
+#define CAUSE_BUTTON 17
 
 // Helper function to read Switches
 int get_sw(void) {
-    volatile int* sw_ptr = (volatile int*)0x04000010;
+    volatile int *sw_ptr = (volatile int *)0x04000010;
     return *sw_ptr & 0x3FF;
+}
+
+// Helper function to read Button (Bit 1)
+int get_btn(void) {
+    volatile int *btn_ptr = (volatile int *)0x040000d0;
+    return !((*btn_ptr >> 1) & 1);
 }
 
 void set_displays(int display_number, int value) {
     static const int hex_codes[] = {
-        0xC0, 0xF9, 0xA4, 0xB0, 0x99,
-        0x92, 0x82, 0xF8, 0x80, 0x90};
-    volatile int* display_ptr = (volatile int*)(0x04000050 + (display_number * 0x10));
+        0xC0, 0xF9, 0xA4, 0xB0, 0x99, 
+        0x92, 0x82, 0xF8, 0x80, 0x90
+    };
+    volatile int *display_ptr = (volatile int *)(0x04000050 + (display_number * 0x10));
     if (value >= 0 && value <= 9) {
         *display_ptr = hex_codes[value];
     } else {
@@ -54,9 +58,10 @@ void set_displays(int display_number, int value) {
     }
 }
 
-// INTERRUPT HANDLER
+/* * INTERRUPT HANDLER 
+ * The assembly code calls this function with the 'cause' argument.
+ */
 void handle_interrupt(unsigned cause) {
-    print_dec(cause);
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     int current_btn, sw_val, selector, value;
@@ -131,31 +136,37 @@ void handle_interrupt(unsigned cause) {
 
 /* Initialize Interrupts and Timer */
 void labinit(void) {
-    volatile int* timer_periodl = (volatile int*)(0x04000020 + 0x8);
-    volatile int* timer_periodh = (volatile int*)(0x04000020 + 0xC);
-    volatile int* timer_control = (volatile int*)(0x04000020 + 0x4);
-    volatile int* timer_status = (volatile int*)(0x04000020);
+    // Timer Pointers
+    volatile int *timer_periodl = (volatile int *)(0x04000020 + 0x8);
+    volatile int *timer_periodh = (volatile int *)(0x04000020 + 0xC);
+    volatile int *timer_control = (volatile int *)(0x04000020 + 0x4);
+    volatile int *timer_status  = (volatile int *)(0x04000020);
 
-    // 1. Setup Timer Hardware (3,000,000 cycles = 100ms)
-    *timer_periodl = 0xC6C0;
-    *timer_periodh = 0x002D;
+    // Button Pointers
+    volatile int *btn_mask = (volatile int *)(0x040000d0 + 0x8); 
+    volatile int *btn_edge = (volatile int *)(0x040000d0 + 0xC);
 
-    // Start Timer + Continuous + Interrupt Enable (ITO)
-    *timer_control = 0x7;
-
-    // Clear pending status
+    // 1. Setup Timer Hardware (100ms)
+    *timer_periodl = 0xC6C0; 
+    *timer_periodh = 0x002D; 
+    *timer_control = 0x7;    // Start + Cont + ITO
     *timer_status = 0;
 
-    asm volatile("csrs mie, %0" :: "r"(0x50000));
+    // 2. Setup Button Hardware
+    *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
+    *btn_edge = 0xF; // Clear any previous edges
+
+    // 3. Enable RISC-V CPU Interrupts
+    // The Assembly startup enables Bit 11 (External) and Bit 3 (Global).
+    // We MUST enable the specific Local Interrupts for Timer (16) and Button (17).
+    // Bit 16 (0x10000) + Bit 17 (0x20000) = 0x30000.
+    asm volatile("csrs mie, %0" :: "r"(0x30000));
 }
 
 int main() {
     labinit();
 
     while (1) {
-        //print("Prime: ");
         prime = nextprime(prime);
-        //print_dec(prime);
-        //print("\n");
     }
 }
