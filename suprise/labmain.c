@@ -30,7 +30,6 @@ int seconds = 0;
 char textbuffer[30];   // Buffer for time2string
 
 // Interrupt Cause Constants
-// Cause 11 is the Standard RISC-V Machine External Interrupt
 #define CAUSE_MACHINE_EXTERNAL 11
 
 // Helper function to read Switches
@@ -62,36 +61,32 @@ void set_displays(int display_number, int value) {
  * The assembly code calls this function with the 'cause' argument.
  */
 void handle_interrupt(unsigned cause) {
-    print_dec(cause);
-
     volatile int *timer_status = (volatile int *)(0x04000020);
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     
     // We check the devices regardless of the specific cause number, 
     // because on some boards they map to 16/17 (Local) and on others to 11 (External).
-    // This makes the handler robust for both configurations.
     
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
     // ==========================================
-    if (cause == 16) {
-        if ((*timer_status & 1) == 1) {
-            // Acknowledge Timer Interrupt
-            *timer_status = 0; 
-            timeoutcount++;
+    // Check if Timer caused interrupt (Bit 0 of Status)
+    if ((*timer_status & 1) == 1) {
+        // Acknowledge Timer Interrupt
+        *timer_status = 0; 
+        timeoutcount++;
 
-            if (timeoutcount >= 10) {
-                timeoutcount = 0;
-                // Standard 1-second increment
-                seconds++;
-                if (seconds >= 60) {
-                    seconds = 0;
-                    minutes++;
-                    if (minutes >= 60) {
-                        minutes = 0;
-                        hours++;
-                        if (hours >= 24) hours = 0;
-                    }
+        if (timeoutcount >= 10) {
+            timeoutcount = 0;
+            // Standard 1-second increment
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                    if (hours >= 24) hours = 0;
                 }
             }
         }
@@ -100,13 +95,17 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
-    // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
-    if (cause == 18) {
-        if ((*btn_edge >> 1) & 1) {
-            // A. Increment by 2 seconds
+    // Check if the cause was 18 (Local Int 2) OR if there are pending edges.
+    // We check *btn_edge directly to be safe.
+    int edge_val = *btn_edge;
+    
+    if (edge_val != 0) {
+        // A. Check if our specific button (Bit 1) was the trigger
+        if ((edge_val >> 1) & 1) {
+            // Increment by 2 seconds
             seconds += 2;
 
-            // B. Handle Overflow
+            // Handle Overflow
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
@@ -116,10 +115,12 @@ void handle_interrupt(unsigned cause) {
                     if (hours >= 24) hours = 0;
                 }
             }
-            // C. Clear the Edge Capture (Interrupt Acknowledge)
-            // Write 1 to Bit 1 to clear it
-            *btn_edge = 2; 
         }
+
+        // B. CRITICAL: Clear ALL pending edges (Interrupt Acknowledge)
+        // We write 0xFF to ensure we clear Bit 0, Bit 1, Bit 2...
+        // This prevents the infinite loop if a different button caused the IRQ.
+        *btn_edge = 0xFF; 
     }
 
     // ==========================================
@@ -157,15 +158,18 @@ void labinit(void) {
 
     // 2. Setup Button Hardware
     *btn_mask = 2;   // Enable interrupt for Button 2 (Bit 1)
-    //*btn_edge = 0xF; // Clear any previous edges
+    
+    // Clear any previous edges. 
+    // This is safe now because handle_interrupt is robust enough to handle spurious edges.
+    *btn_edge = 0xFF; 
 
     // 3. Enable RISC-V CPU Interrupts
-    // We enable multiple bits to ensure we catch the interrupt regardless of mapping:
-    // Bit 11 (0x800): Machine External Interrupt (Standard RISC-V)
+    // Enable multiple bits to ensure we catch the interrupt regardless of mapping:
+    // Bit 11 (0x800): Machine External Interrupt
     // Bit 16 (0x10000): Local Int 0 (Timer)
-    // Bit 17 (0x20000): Local Int 1 (Often Buttons, but maybe not on your board)
-    // Bit 18 (0x40000): Local Int 2 (You suspected the button is here)
-    // Value: 0x40000 + 0x20000 + 0x10000 + 0x800 = 0x70800
+    // Bit 17 (0x20000): Local Int 1 
+    // Bit 18 (0x40000): Local Int 2 (Button)
+    // Value: 0x70800
     asm volatile("csrs mie, %0" :: "r"(0x70800));
 
     // Enable Global Interrupts (Bit 3 in mstatus)
