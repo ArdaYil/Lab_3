@@ -564,7 +564,7 @@ Disassembly of section .text:
  7e8:	04000737          	lui	a4,0x4000
  7ec:	0dc72783          	lw	a5,220(a4) # 40000dc <_stack_end+0x3eff2dc>
  7f0:	00001437          	lui	s0,0x1
- 7f4:	0027f793          	andi	a5,a5,2
+ 7f4:	0017f793          	andi	a5,a5,1
  7f8:	2a078263          	beqz	a5,a9c <__heap_size+0x29c>
  7fc:	d4042783          	lw	a5,-704(s0) # d40 <seconds>
  800:	03b00713          	li	a4,59

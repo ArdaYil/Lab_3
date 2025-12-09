@@ -102,7 +102,7 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     // Check if Button 2 (Bit 1) triggered it via the Edge Capture register
     if (cause == 18) {
-        if ((*btn_edge >> 1) & 1) {
+        if (*btn_edge & 1) {
             // A. Increment by 2 seconds
             seconds += 2;
 
