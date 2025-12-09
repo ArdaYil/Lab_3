@@ -157,14 +157,6 @@ void labinit(void) {
     
     // Clear any previous edges to prevent immediate interrupt on start
     *btn_edge = 0xF; 
-
-    // 3. Enable RISC-V CPU Interrupts
-    asm volatile("csrs mie, %0" :: "r"(0x70800)); // Bit 11, 16, 17, 18
-    asm volatile("csrs mstatus, %0" :: "r"(0x8)); // Global Enable
-}
-
-enable_interrupt() {; // added
-
 }
 
 int main() {
