@@ -65,10 +65,13 @@ void handle_interrupt(unsigned cause) {
     volatile int *btn_edge     = (volatile int *)(0x040000dc);
     volatile int *btn_data     = (volatile int *)(0x040000d0); // Live data
 
-    // Print Cause
-    print("Cause: ");
-    print_dec(cause);
-    print("\n");
+    // Debugging print
+    if (cause == 18) {
+        // print("Cause: "); print_dec(cause);
+        // print(" Edge: "); print_dec(*btn_edge);
+        // print(" Live: "); print_dec(*btn_data);
+        // print("\n");
+    }
     
     // ==========================================
     // 1. CHECK TIMER (Address 0x04000020)
@@ -98,23 +101,17 @@ void handle_interrupt(unsigned cause) {
     // 2. CHECK BUTTON (Address 0x040000dc)
     // ==========================================
     if (cause == 18) {
-        // Debug: Read registers
-        int edge_val = *btn_edge;
-        int live_val = *btn_data;
-
-        // Print debug info
-        print("  EdgeReg: ");
-        print_dec(edge_val);
-        print("  LiveBtn: ");
-        print_dec(live_val);
-        print("\n");
-
-        // Acknowledge interrupt immediately by clearing ALL edges
+        // A. Always clear the interrupt immediately to stop the flooding.
+        // We write 1s to all bits to clear any pending edge.
         *btn_edge = 0xFF;
 
-        // Logic: Check if Button 2 (Bit 1) was the trigger
-        if ((edge_val >> 1) & 1) {
-            print("  -> Btn2 Triggered!\n");
+        // B. Check the LIVE status (Data Register) for Button 2 (Bit 1).
+        // Since Edge Capture seems unreliable/zero in your debug output,
+        // we trust the fact that you are holding the button down.
+        int live_val = *btn_data;
+        
+        if ((live_val >> 1) & 1) {
+            // C. Increment time
             seconds += 2;
             if (seconds >= 60) {
                 seconds -= 60; 
@@ -125,6 +122,16 @@ void handle_interrupt(unsigned cause) {
                     if (hours >= 24) hours = 0;
                 }
             }
+
+            // D. Debounce / Wait for Release
+            // Since we are using live status, if we don't wait, this will
+            // fire continuously while the button is held.
+            // We wait a bit to ensure we don't double-count a single press.
+            volatile int i;
+            for(i = 0; i < 300000; i++); 
+            
+            // Clear again after wait to eat any bounces
+            *btn_edge = 0xFF;
         }
     }
 
