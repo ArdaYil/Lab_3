@@ -118,25 +118,6 @@ _start:
 	la sp, _stack_end
 	la gp, __global_pointer
 
-	// --- ENABLE INTERRUPTS START ---
-
-	// 2. Set the Trap Vector Base Address (mtvec)
-	// This tells the CPU to jump to _isr_handler when an interrupt fires.
-	la t0, _isr_handler
-	csrw mtvec, t0
-
-	// 3. Enable Machine External Interrupts (MEIE) in mie
-	// MEIE is bit 11. (1 << 11 = 0x800)
-	li t0, 0x800
-	csrs mie, t0
-
-	// 4. Enable Global Interrupts (MIE) in mstatus
-	// MIE is bit 3. (1 << 3 = 0x8)
-	li t0, 0x8
-	csrs mstatus, t0
-
-	// --- ENABLE INTERRUPTS END ---
-
 	la a0, welcome_msg
 	li a7,4
 	ecall
