@@ -157,6 +157,8 @@ void labinit(void) {
     
     // Clear any previous edges to prevent immediate interrupt on start
     *btn_edge = 0xF; 
+
+    enable_interrupt();
 }
 
 int main() {
