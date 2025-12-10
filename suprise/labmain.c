@@ -100,7 +100,7 @@ void handle_interrupt(unsigned cause) {
     if (cause == 18) {
         // A. Acknowledge IMMEDIATELY.
         // We write 1s to all bits. This is critical to stop the interrupt line.
-        //*btn_edge = 0xFF;
+        *btn_edge = 0;
 
         // B. Increment Logic
         // Since Cause 18 fired, we know a button was pressed.
