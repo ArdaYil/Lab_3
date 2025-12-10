@@ -720,7 +720,7 @@ Disassembly of section .text:
  a50:	01200793          	li	a5,18
  a54:	daf41ae3          	bne	s0,a5,808 <__heap_size+0x8>
  a58:	040007b7          	lui	a5,0x4000
- a5c:	00100713          	li	a4,1
+ a5c:	0ff00713          	li	a4,255
  a60:	0ce7ae23          	sw	a4,220(a5) # 40000dc <_stack_end+0x3eff378>
  a64:	00001437          	lui	s0,0x1
  a68:	c9442783          	lw	a5,-876(s0) # c94 <seconds>
