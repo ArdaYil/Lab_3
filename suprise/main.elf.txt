@@ -721,7 +721,7 @@ Disassembly of section .text:
  a54:	d8078ce3          	beqz	a5,7ec <handle_interrupt+0x38>
  a58:	c7c42783          	lw	a5,-900(s0) # c7c <seconds>
  a5c:	03b00713          	li	a4,59
- a60:	00178693          	addi	a3,a5,1
+ a60:	00278693          	addi	a3,a5,2
  a64:	00d74a63          	blt	a4,a3,a78 <__heap_size+0x278>
  a68:	c6d42e23          	sw	a3,-900(s0)
  a6c:	d81ff06f          	j	7ec <handle_interrupt+0x38>
@@ -729,7 +729,7 @@ Disassembly of section .text:
  a74:	d75ff06f          	j	7e8 <handle_interrupt+0x34>
  a78:	000014b7          	lui	s1,0x1
  a7c:	c804a683          	lw	a3,-896(s1) # c80 <minutes>
- a80:	fc578793          	addi	a5,a5,-59
+ a80:	fc678793          	addi	a5,a5,-58
  a84:	c6f42e23          	sw	a5,-900(s0)
  a88:	00168793          	addi	a5,a3,1
  a8c:	02f75e63          	bge	a4,a5,ac8 <__heap_size+0x2c8>

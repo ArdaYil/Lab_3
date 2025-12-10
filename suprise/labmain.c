@@ -99,7 +99,7 @@ void handle_interrupt(unsigned cause) {
     // ==========================================
     if (cause == 18) {
         *btn_edge = 0;
-        
+
         if (get_btn()) {
             // A. Acknowledge IMMEDIATELY.
             // We write 1s to all bits. This is critical to stop the interrupt line.
@@ -107,7 +107,7 @@ void handle_interrupt(unsigned cause) {
             // B. Increment Logic
             // Since Cause 18 fired, we know a button was pressed.
             // We skip checking specific bits because the register read was unreliable (returned 0).
-            seconds += 1;
+            seconds += 2;
             if (seconds >= 60) {
                 seconds -= 60; 
                 minutes++;
