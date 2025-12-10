@@ -42,7 +42,7 @@ int get_sw(void) {
 // Helper function to read Button (Bit 1)
 int get_btn(void) {
     volatile int *btn_ptr = (volatile int *)0x040000d0;
-    return (*btn_ptr >> 1) & 1; 
+    return *btn_ptr & 1; 
 }
 
 void set_displays(int display_number, int value) {
