@@ -147,13 +147,14 @@ loop:	j loop
 
 enable_interrupt:
     // Enable timer interrupts (bit 16) and button interrupts (bit 18)
-    li t0, (1 << 16) | (1 << 18)
+    li t0, (1 << 16)
+    csrs mie, t0
+
+	li t0, (1 << 18)
     csrs mie, t0
     
-    // Enable global interrupts (MIE bit, bit 3 in mstatus). 
-    // Bit 3 = värde 8. Inte 3.
-    li t0, 0x8      
-    csrs mstatus, t0
+    li t0, (1 << 3)
+	csrs mstatus, t0
     
     // Return
     jr ra
