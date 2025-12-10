@@ -726,11 +726,11 @@ Disassembly of section .text:
  a68:	00001437          	lui	s0,0x1
  a6c:	c6042703          	lw	a4,-928(s0) # c60 <seconds>
  a70:	03b00693          	li	a3,59
- a74:	00270793          	addi	a5,a4,2
+ a74:	00170793          	addi	a5,a4,1
  a78:	02f6d463          	bge	a3,a5,aa0 <__heap_size+0x2a0>
  a7c:	000014b7          	lui	s1,0x1
  a80:	c644a783          	lw	a5,-924(s1) # c64 <minutes>
- a84:	fc670713          	addi	a4,a4,-58
+ a84:	fc570713          	addi	a4,a4,-59
  a88:	c6e42023          	sw	a4,-928(s0)
  a8c:	00178793          	addi	a5,a5,1
  a90:	f0f6c4e3          	blt	a3,a5,998 <__heap_size+0x198>

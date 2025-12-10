@@ -105,7 +105,7 @@ void handle_interrupt(unsigned cause) {
         // B. Increment Logic
         // Since Cause 18 fired, we know a button was pressed.
         // We skip checking specific bits because the register read was unreliable (returned 0).
-        seconds += 2;
+        seconds += 1;
         if (seconds >= 60) {
             seconds -= 60; 
             minutes++;
